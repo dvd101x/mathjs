@@ -1,3 +1,4 @@
+import { DBL_EPSILON } from '../number.js'
 /**
  * Compares two BigNumbers.
  * @param {BigNumber} x       First value to compare
@@ -7,11 +8,10 @@
  *                            test whether x and y are exactly equal.
  * @return {boolean} whether the two numbers are nearly equal
  */
-export function nearlyEqual (x, y, epsilon) {
-  // if epsilon is null or undefined, test whether x and y are exactly equal
-  if (epsilon === null || epsilon === undefined) {
-    return x.eq(y)
-  }
+export function nearlyEqual (x, y, rtol, atol) {
+  const epsilon = DBL_EPSILON
+  const absTol = (atol > 0) ? atol : 0
+  const relTol = (rtol >= 0) ? rtol : (atol > 0) ? Math.sqrt(epsilon) : 0
 
   // use "==" operator, handles infinities
   if (x.eq(y)) {
@@ -26,14 +26,7 @@ export function nearlyEqual (x, y, epsilon) {
   // at this point x and y should be finite
   if (x.isFinite() && y.isFinite()) {
     // check numbers are very close, needed when comparing numbers near zero
-    const diff = x.minus(y).abs()
-    if (diff.isZero()) {
-      return true
-    } else {
-      // use relative error
-      const max = x.constructor.max(x.abs(), y.abs())
-      return diff.lte(max.times(epsilon))
-    }
+    return x.sub(y).abs().lte(x.constructor.max(absTol, relTol * x.constructor.max(x.abs(), y.abs())))
   }
 
   // Infinite and Number or negative Infinite and positive Infinite cases

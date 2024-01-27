@@ -604,11 +604,10 @@ export const DBL_EPSILON = Number.EPSILON || 2.2204460492503130808472633361816E-
  *                            test whether x and y are exactly equal.
  * @return {boolean} whether the two numbers are nearly equal
 */
-export function nearlyEqual (x, y, epsilon) {
-  // if epsilon is null or undefined, test whether x and y are exactly equal
-  if (epsilon === null || epsilon === undefined) {
-    return x === y
-  }
+export function nearlyEqual (x, y, rtol, atol) {
+  const epsilon = DBL_EPSILON
+  const absTol = (atol > 0) ? atol : 0
+  const relTol = (rtol >= 0) ? rtol : (atol > 0) ? Math.sqrt(epsilon) : 0
 
   if (x === y) {
     return true
@@ -622,13 +621,7 @@ export function nearlyEqual (x, y, epsilon) {
   // at this point x and y should be finite
   if (isFinite(x) && isFinite(y)) {
     // check numbers are very close, needed when comparing numbers near zero
-    const diff = Math.abs(x - y)
-    if (diff < DBL_EPSILON) {
-      return true
-    } else {
-      // use relative error
-      return diff <= Math.max(Math.abs(x), Math.abs(y)) * epsilon
-    }
+    return Math.abs(x - y) <= Math.max(absTol, relTol * Math.max(Math.abs(x), Math.abs(y)))
   }
 
   // Infinite and Number or negative Infinite and positive Infinite cases
